@@ -28,5 +28,9 @@ bar.addEventListener('keydown', (e) => {
 
 
 btn.addEventListener('click', () => {
-  window.location.href = 'https://www.google.com/search?q=' + bar.value;
+  if (!engine) {
+    window.location.href = 'https://www.google.com/search?q=' + bar.value;
+  } else {
+    window.location.href = engine + bar.value;
+  }
 });
