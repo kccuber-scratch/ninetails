@@ -1,4 +1,4 @@
-# Nintails Home
+# Ninetails Home
 
 https://mystpi.github.io/ninetails
 
