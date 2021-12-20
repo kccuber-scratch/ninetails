@@ -19,7 +19,7 @@ fetch('https://api.github.com/repos/MystPi/ninetails/releases/latest')
 bar.addEventListener('keydown', (e) => {
   if (e.keyCode === 13) {
     if (!engine) {
-      window.location.href = 'https://www.google.com/search?q=' + bar.value;
+      window.location.href = 'https://www.startpage.com/sp/search?q=' + bar.value;
     } else {
       window.location.href = engine + bar.value;
     }
@@ -29,7 +29,7 @@ bar.addEventListener('keydown', (e) => {
 
 btn.addEventListener('click', () => {
   if (!engine) {
-    window.location.href = 'https://www.google.com/search?q=' + bar.value;
+    window.location.href = 'https://www.startpage.com/sp/search?q=' + bar.value;
   } else {
     window.location.href = engine + bar.value;
   }
