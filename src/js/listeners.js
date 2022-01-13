@@ -20,6 +20,16 @@ omnibox.addEventListener('keydown', (e) => {
 });
 
 
+window.addEventListener('offline', () => {
+  byId('offline').style.display = 'block';
+});
+
+
+window.addEventListener('online', () => {
+  byId('offline').style.display = 'none';
+});
+
+
 byId('settings-presets').addEventListener('change', () => {
   byId('settings-searchurl').value = byId('settings-presets').value;
 });
@@ -91,15 +101,21 @@ click('menu-forward', () => {
 click('cover', hideMenu);
 
 
-click('more-settings', () => {
-  openSettings();
-  toggleMoreMenu();
+click('more-settings', openSettings);
+
+
+click('more-bookmarks', openBookmarks);
+
+
+document.querySelectorAll('#more-menu>ul>li>button').forEach((button) => {
+  button.addEventListener('click', toggleMoreMenu);
 });
 
 
-click('more-github', () => {
-  toggleMoreMenu();
-  createTab('https://github.com/mystpi/ninetails');
+document.querySelectorAll('[data-link]').forEach((link) => {
+  link.addEventListener('click', (e) => {
+    createTab(e.target.dataset.link);
+  });
 });
 
 
@@ -107,6 +123,40 @@ click('settings-done', saveSettings);
 
 
 click('settings-cancel', hideSettings);
+
+
+click('offline-retry', () => {
+  if (window.navigator.onLine) {
+    byId('offline').style.display = 'none';
+  }
+})
+
+
+click('bookmarks-close', () => {
+  byId('bookmarks').style.display = 'none';
+});
+
+
+click('bookmark', () => {
+  let bookmarks = JSON.parse(localStorage.getItem('bookmarks'));
+  if (!bookmarks) {
+    bookmarks = [];
+  }
+  let ret = false;
+  bookmarks.forEach((bookmark) => {
+    if (bookmark[1] === view.getURL()) {
+      ret = true;
+      bookmarks.splice(bookmarks.indexOf(bookmark), 1);
+      localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+      fillHeart(view.getURL());
+      return;
+    }
+  });
+  if (ret) return;
+  bookmarks.push([favicon, view.getURL()]);
+  localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+  fillHeart(view.getURL());
+})
 
 
 /**
@@ -122,6 +172,7 @@ function addListenersToView(view, hash) {
       setOmnibox(view.getURL());
       checkSSL(view.getURL());
       grayOut();
+      fillHeart(view.getURL());
     }
     tab.classList.remove('animate-pulse');
     setTitle(tab, view.getTitle());
@@ -179,6 +230,7 @@ function addListenersToView(view, hash) {
       let icon = e.favicons[0];
       let img = tab.getElementsByTagName('img')[0];
       img.src = icon;
+      favicon = icon;
     }
   });
 }

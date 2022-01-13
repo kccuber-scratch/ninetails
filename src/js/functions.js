@@ -51,11 +51,23 @@ function switchTabs(tab) {
   activeHash = tab;
 
   setOmnibox(view.src);
-  view.addEventListener('dom-ready', () => {
+  // Hacky, but it works (until I find a better way)
+  try {
+    // First, execute the functions assuming the DOM is ready
     setOmnibox(view.getURL());
     checkSSL(view.getURL());
     grayOut();
-  });
+    fillHeart(view.getURL());
+  } catch (e) {
+    // If the DOM isn't ready, wait for it
+    // console.log(e);
+    view.addEventListener('dom-ready', () => {
+      setOmnibox(view.getURL());
+      checkSSL(view.getURL());
+      grayOut();
+      fillHeart(view.getURL());
+    });
+  }
 }
 
 
@@ -71,7 +83,7 @@ function createTab(url) {
 
   tab.classList.add('tab');
   tab.id = 'tab-' + hash;
-  tab.onclick = (e) => {
+  tab.onmousedown = (e) => {
     switchTabs(hash);
     checkForDelTab(e, hash);
   };
@@ -168,6 +180,60 @@ function saveSettings() {
 }
 
 
+/** Open the bookmarks menu and load the bookmarks */
+function openBookmarks() {
+  let el = byId('bookmarks-container');
+  while (el.firstChild) {
+    el.removeChild(el.firstChild);
+  }
+  let bookmarks = JSON.parse(localStorage.getItem('bookmarks'));
+  if (bookmarks) {
+    bookmarks.forEach((bookmark) => {
+      let p = document.createElement('p');
+      p.className = 'mb-2 overflow-hidden font-mono text-gray-700 whitespace-nowrap text-ellipsis';
+      let img = document.createElement('img');
+      img.src = bookmark[0];
+      img.className = 'inline w-4 h-4 mr-4';
+      let a = document.createElement('a');
+      a.setAttribute('data-link', bookmark[1]);
+      a.innerText = bookmark[1];
+      a.className = 'underline cursor-pointer';
+      a.onclick = (e) => {
+        createTab(e.target.dataset.link);
+        byId('bookmarks').style.display = 'none';
+      }
+      p.appendChild(img);
+      p.appendChild(a);
+      el.appendChild(p);
+    });
+  }
+  byId('bookmarks').style.display = 'block';
+}
+
+
+/**
+ * Set the heart icon to the correct state
+ * @param {string} url - The URL to check
+ */
+function fillHeart(url) {
+  let bookmarks = JSON.parse(localStorage.getItem('bookmarks'));
+  let inBookmarks = false;
+  let el = byId('bookmark');
+  if (bookmarks) {
+    bookmarks.forEach((bookmark) => {
+      if (bookmark[1] === url) {
+        el.children[0].src = './icons/heart_filled.png';
+        inBookmarks = true;
+        return;
+      }
+    });
+  }
+  if (!inBookmarks) {
+    el.children[0].src = './icons/heart_empty.png';
+  }
+}
+
+
 /** Hide the right-click menu */
 function hideMenu() {
   menu.style.display = 'none';
@@ -177,17 +243,11 @@ function hideMenu() {
 
 /** Close the active tab and switch to a new one */
 function closeTab() {
-  let tabs = document.querySelectorAll('[id^="tab-"]')
-  if (tabs.length > 1) {
-    let temp = activeHash;
-    if (temp !== tabs[0].id.slice(4)) {
-      switchTabs(tabs[0].id.slice(4));
-    } else {
-      switchTabs(tabs[1].id.slice(4));
-    }
-    byId('tab-' + temp).remove();
-    byId('view-' + temp).remove();
-  }
+  let tabbar = byId('tabbar');
+  if (tabbar.children.length === 1) return;
+  byId('view-' + activeHash).remove();
+  byId('tab-' + activeHash).remove();
+  switchTabs(tabbar.lastChild.id.slice(4));
 }
 
 
@@ -222,15 +282,16 @@ function checkSSL(url) {
 function grayOut() {
   let backImage = back.getElementsByTagName('img')[0];
   let forwardImage = forward.getElementsByTagName('img')[0];
+
   if (view.canGoBack()) {
-    backImage.style.opacity = 0.4;
+    backImage.style.opacity = 0.5;
     back.classList.add('hoverable');
   } else {
     backImage.style.opacity = 0.2;
     back.classList.remove('hoverable');
   }
   if (view.canGoForward()) {
-    forwardImage.style.opacity = 0.4;
+    forwardImage.style.opacity = 0.5;
     forward.classList.add('hoverable');
   } else {
     forwardImage.style.opacity = 0.2;
